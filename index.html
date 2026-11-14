@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kids Alphabet & Letter Tracing Studio</title>
+    <meta name="description" content="Fun, interactive English alphabet learning and letter tracing app for preschool and kindergarten kids.">
+    <meta name="theme-color" content="#FFF9F2">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+
+    <!-- Child-friendly Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="app-header">
+        <div class="brand-wrapper">
+            <div class="logo-badge">🔤</div>
+            <div class="brand-title">Kids Alphabet</div>
+        </div>
+
+        <nav class="header-nav">
+            <button class="nav-btn active" data-mode="trace">✏️ Trace</button>
+            <button class="nav-btn" data-mode="chart">🔠 Chart</button>
+            <button class="nav-btn" data-mode="game">🎮 Quiz</button>
+            <button class="nav-btn" data-mode="stickers">⭐ Stickers</button>
+        </nav>
+
+        <div class="header-status">
+            <div class="star-counter-pill">
+                <span>⭐</span>
+                <span id="globalStarCount">0</span>
+            </div>
+            <button id="muteToggleBtn" class="icon-circle-btn" title="Toggle Sound">🔊</button>
+        </div>
+    </header>
+
+    <!-- Quick 26 Letters Strip -->
+    <div class="quick-letter-strip" id="lettersQuickBar" aria-label="Alphabet selector">
+        <!-- Letter pills populated via JS -->
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-content">
+
+        <!-- =========================================================
+             SECTION 1: LETTER TRACING STUDIO
+             ========================================================= -->
+        <section id="section-trace" class="mode-section active">
+            <div class="studio-grid">
+
+                <!-- Left Column: Letter Showcase Card -->
+                <aside class="letter-hero-card">
+                    <!-- Case Switcher -->
+                    <div class="case-toggle-wrapper">
+                        <button id="toggleUpperBtn" class="case-btn active">UPPERCASE (A)</button>
+                        <button id="toggleLowerBtn" class="case-btn">lowercase (a)</button>
+                    </div>
+
+                    <!-- Giant Letter Icon -->
+                    <div class="hero-letter-circle" id="currentLetterDisplay" title="Tap to hear">A</div>
+                    <div class="hero-emoji" id="currentEmojiDisplay">🍎</div>
+                    <div class="hero-word" id="currentWordDisplay">Apple</div>
+                    <div class="sound-hint-pill" id="soundHintDisplay">/æ/ like apple</div>
+
+                    <!-- Hear Sounds Action Buttons -->
+                    <div class="hero-audio-actions">
+                        <button id="speakLetterBtn" class="hero-action-btn primary">
+                            <span>🔊</span> Hear Word
+                        </button>
+                        <button id="phonicsBtn" class="hero-action-btn secondary">
+                            <span>🎵</span> Phonics
+                        </button>
+                    </div>
+
+                    <!-- More Words with this Letter -->
+                    <div class="alt-words-box">
+                        <div class="alt-words-title">More Words</div>
+                        <div class="alt-chips-wrapper" id="altWordsContainer">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Fun Animal/Letter Fact -->
+                    <div class="fun-fact-box" id="funFactDisplay">
+                        Apples float in water because 25% of their volume is air!
+                    </div>
+                </aside>
+
+                <!-- Right Column: Interactive Tracing Board -->
+                <div class="canvas-card">
+                    <!-- Canvas Toolbar Top -->
+                    <div class="canvas-toolbar-top">
+                        <div class="progress-star-group">
+                            <div class="star-rating-icons">
+                                <span class="rating-star" id="star-1">★</span>
+                                <span class="rating-star" id="star-2">★</span>
+                                <span class="rating-star" id="star-3">★</span>
+                            </div>
+                            <div class="progress-pill-track">
+                                <div class="progress-pill-fill" id="traceProgressBar"></div>
+                            </div>
+                            <span class="progress-pct-badge" id="tracePercent">0%</span>
+                        </div>
+
+                        <div class="canvas-nav-actions">
+                            <button id="demoBtn" class="action-pill-btn demo" title="Watch animated demo">
+                                <span>👀</span> Watch Me
+                            </button>
+                            <button id="clearBtn" class="action-pill-btn clear" title="Clear and try again">
+                                <span>🔄</span> Try Again
+                            </button>
+                            <button id="prevLetterBtn" class="action-pill-btn nav" title="Previous letter">
+                                <span>⬅️</span>
+                            </button>
+                            <button id="nextLetterBtn" class="action-pill-btn nav" title="Next letter">
+                                <span>➡️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Drawing Viewport -->
+                    <div class="canvas-viewport-wrapper">
+                        <canvas id="tracingCanvas" width="500" height="500"></canvas>
+                    </div>
+
+                    <!-- Canvas Controls Bottom (Crayons & Brushes) -->
+                    <div class="canvas-controls-bottom">
+                        <div class="color-palette-group" aria-label="Crayon colors">
+                            <button class="color-swatch selected" data-color="#FF4757" style="background-color: #FF4757;" title="Red"></button>
+                            <button class="color-swatch" data-color="#FFA502" style="background-color: #FFA502;" title="Orange"></button>
+                            <button class="color-swatch" data-color="#FED049" style="background-color: #FED049;" title="Yellow"></button>
+                            <button class="color-swatch" data-color="#2ED573" style="background-color: #2ED573;" title="Green"></button>
+                            <button class="color-swatch" data-color="#1E90FF" style="background-color: #1E90FF;" title="Blue"></button>
+                            <button class="color-swatch" data-color="#9B59B6" style="background-color: #9B59B6;" title="Purple"></button>
+                            <button class="color-swatch" data-color="#FF6B81" style="background-color: #FF6B81;" title="Pink"></button>
+                            <button class="color-swatch rainbow" data-color="rainbow" title="Rainbow Sparkle"></button>
+                        </div>
+
+                        <div class="brush-sizes-group" aria-label="Brush thickness">
+                            <button class="brush-btn" data-size="26">Fine</button>
+                            <button class="brush-btn selected" data-size="42">Medium</button>
+                            <button class="brush-btn" data-size="62">Thick</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 2: ALPHABET CHART / SOUNDBOARD
+             ========================================================= -->
+        <section id="section-chart" class="mode-section">
+            <div class="chart-header">
+                <h2>Explore the Alphabet 🔠</h2>
+                <p>Tap any card to hear the letter and its sound, or tap Trace to practice!</p>
+            </div>
+            <div class="alphabet-grid" id="alphabetGrid">
+                <!-- 26 cards injected by JS -->
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 3: PHONICS & LETTER QUIZ GAME
+             ========================================================= -->
+        <section id="section-game" class="mode-section">
+            <div class="quiz-container">
+                <div class="quiz-score-bar">
+                    <div>Score: <span id="quizScoreVal" style="color: #2ED573;">0</span> 🌟</div>
+                    <div>Streak: <span id="quizStreakVal" style="color: #1E90FF;">0</span> 🔥</div>
+                </div>
+
+                <div class="quiz-prompt-card">
+                    <span class="quiz-prompt-emoji" id="quizPromptEmoji">🍎</span>
+                    <h3 class="quiz-prompt-text" id="quizPromptText">Which letter starts with Apple?</h3>
+                </div>
+
+                <div class="quiz-choices-grid" id="quizChoicesGrid">
+                    <!-- 4 options injected via JS -->
+                </div>
+
+                <div class="quiz-feedback" id="quizFeedback"></div>
+
+                <div>
+                    <button id="quizNextBtn" class="quiz-next-btn" style="display: none;">Next Question ➡️</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 4: MY STICKER BOOK & TROPHY ROOM
+             ========================================================= -->
+        <section id="section-stickers" class="mode-section">
+            <div class="stickers-header">
+                <h2>My Sticker Book 🏆</h2>
+                <p id="stickerProgressMsg">0 of 26 Stickers Unlocked! 🌟</p>
+            </div>
+            <div class="sticker-grid" id="stickerGrid">
+                <!-- 26 collectible badges injected via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Celebration Modal (Appears when child completes 3 stars) -->
+    <div class="modal-overlay" id="celebrationModal">
+        <div class="celebration-card">
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div class="modal-char">A</div>
+            <div class="modal-title">Superstar! 🎉</div>
+            <div class="modal-msg">You traced the letter perfectly!</div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="closeModalBtn">Keep Tracing</button>
+                <button class="modal-btn primary" id="nextLetterModalBtn">Next Letter ➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/alphabet-data.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/tracing-canvas.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Service Worker Registration for Offline Use -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>
