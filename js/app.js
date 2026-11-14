@@ -468,9 +468,6 @@ class KidsAlphabetApp {
             videoPlayer.load();
             videoPlayer.play().catch(() => {});
         }
-
-        // Play matching audio lesson softly
-        window.kidsAudio.speakLetter(letter);
     }
 
     /**
