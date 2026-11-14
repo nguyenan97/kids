@@ -1,6 +1,6 @@
 /**
- * Kids Alphabet Main Application
- * Coordinates tracing, soundboard, quiz game, sticker book, and free draw modes.
+ * Kids Alphabet Main Application (v3.0)
+ * Coordinates tracing, animated videos, soundboard, quiz game, and sticker book.
  */
 
 class KidsAlphabetApp {
@@ -8,7 +8,7 @@ class KidsAlphabetApp {
         this.alphabet = ALPHABET_DATA;
         this.currentIndex = 0;
         this.isLowercase = false;
-        this.currentMode = 'trace'; // 'trace' | 'chart' | 'game' | 'stickers' | 'draw'
+        this.currentMode = 'trace'; // 'trace' | 'videos' | 'chart' | 'game' | 'stickers'
 
         // Local storage data
         this.progress = this.loadProgress();
@@ -24,6 +24,7 @@ class KidsAlphabetApp {
         this.initDOM();
         this.initCanvas();
         this.renderLetter(this.currentIndex);
+        this.renderVideoSection();
         this.renderChart();
         this.renderStickerBook();
         this.updateStarDisplay();
@@ -36,7 +37,7 @@ class KidsAlphabetApp {
         } catch (_) {}
         return {
             totalStars: 0,
-            letters: {} // { "A": { upper: false, lower: false, stars: 0 } }
+            letters: {}
         };
     }
 
@@ -57,7 +58,7 @@ class KidsAlphabetApp {
     initDOM() {
         // Navigation buttons
         document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 const mode = btn.dataset.mode;
                 this.switchMode(mode);
             });
@@ -100,6 +101,40 @@ class KidsAlphabetApp {
             this.canvas.startDemo();
         });
 
+        // Video button in tracing toolbar
+        const traceVideoBtn = document.getElementById('traceVideoBtn');
+        if (traceVideoBtn) {
+            traceVideoBtn.addEventListener('click', () => {
+                window.kidsAudio.playPop();
+                this.switchMode('videos');
+                this.loadLetterVideo(this.currentIndex);
+            });
+        }
+
+        // Done button in tracing toolbar
+        const doneBtn = document.getElementById('doneTracingBtn');
+        if (doneBtn) {
+            doneBtn.addEventListener('click', () => {
+                window.kidsAudio.playPop();
+                if (this.canvas) {
+                    this.canvas.evaluateLetterCompletion();
+                    if (!this.canvas.completed) {
+                        // Gentle hint if strokes are still missing
+                        window.kidsAudio.speak("Trace all the strokes from 1 to the end!");
+                    }
+                }
+            });
+        }
+
+        // Jump to trace from video theater
+        const jumpTraceBtn = document.getElementById('jumpToTraceFromVideoBtn');
+        if (jumpTraceBtn) {
+            jumpTraceBtn.addEventListener('click', () => {
+                window.kidsAudio.playPop();
+                this.switchMode('trace');
+            });
+        }
+
         const speakBtn = document.getElementById('speakLetterBtn');
         if (speakBtn) speakBtn.addEventListener('click', () => {
             const letter = this.alphabet[this.currentIndex];
@@ -112,7 +147,7 @@ class KidsAlphabetApp {
             window.kidsAudio.speakPhonics(letter);
         });
 
-        // Color buttons
+        // Color swatches
         document.querySelectorAll('.color-swatch').forEach(swatch => {
             swatch.addEventListener('click', () => {
                 document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
@@ -123,7 +158,7 @@ class KidsAlphabetApp {
             });
         });
 
-        // Brush size buttons
+        // Brush sizes
         document.querySelectorAll('.brush-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('selected'));
@@ -139,7 +174,6 @@ class KidsAlphabetApp {
         if (muteBtn) {
             muteBtn.addEventListener('click', () => {
                 window.kidsAudio.muted = !window.kidsAudio.muted;
-                window.kidsAudio.speechEnabled = !window.kidsAudio.muted;
                 muteBtn.textContent = window.kidsAudio.muted ? '🔇' : '🔊';
                 muteBtn.classList.toggle('muted', window.kidsAudio.muted);
             });
@@ -150,12 +184,6 @@ class KidsAlphabetApp {
         if (quizNextBtn) {
             quizNextBtn.addEventListener('click', () => this.generateQuizQuestion());
         }
-
-        // Free Draw Clear
-        const drawClearBtn = document.getElementById('drawClearBtn');
-        if (drawClearBtn) {
-            drawClearBtn.addEventListener('click', () => this.canvas.clear());
-        }
     }
 
     initCanvas() {
@@ -164,7 +192,25 @@ class KidsAlphabetApp {
 
         this.canvas = new TracingCanvas(canvasEl, {
             onProgress: (pct, stars) => this.handleTraceProgress(pct, stars),
-            onComplete: (letter, isLower) => this.handleTraceComplete(letter, isLower)
+            onComplete: (letter, isLower) => this.handleTraceComplete(letter, isLower),
+            onStrokeUpdate: (status) => this.renderStrokeChecklist(status)
+        });
+    }
+
+    renderStrokeChecklist(statusList) {
+        const bar = document.getElementById('strokeChecklistBar');
+        if (!bar) return;
+        bar.innerHTML = '';
+
+        statusList.forEach(s => {
+            const item = document.createElement('div');
+            item.className = `stroke-status-chip ${s.isDone ? 'done' : ''}`;
+            item.innerHTML = `
+                <span class="chip-num">${s.id}</span>
+                <span class="chip-label">${s.hint}</span>
+                <span class="chip-check">${s.isDone ? '✅' : '⏳'}</span>
+            `;
+            bar.appendChild(item);
         });
     }
 
@@ -212,7 +258,6 @@ class KidsAlphabetApp {
             }
         });
 
-        // Scroll active pill into view smoothly
         const active = document.querySelector('.letter-pill.active');
         if (active) {
             active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -224,7 +269,6 @@ class KidsAlphabetApp {
         const letter = this.alphabet[index];
         if (!letter) return;
 
-        // Card details
         const charDisplay = this.isLowercase ? letter.lower : letter.char;
         const mainCharEl = document.getElementById('currentLetterDisplay');
         if (mainCharEl) mainCharEl.textContent = charDisplay;
@@ -241,7 +285,6 @@ class KidsAlphabetApp {
         const funFactEl = document.getElementById('funFactDisplay');
         if (funFactEl) funFactEl.textContent = letter.funFact;
 
-        // Alternative words badges
         const altContainer = document.getElementById('altWordsContainer');
         if (altContainer) {
             altContainer.innerHTML = '';
@@ -257,17 +300,13 @@ class KidsAlphabetApp {
             });
         }
 
-        // Reset progress stars
         this.updateStarRating(0);
 
-        // Update canvas
         if (this.canvas) {
             this.canvas.setLetter(letter, this.isLowercase);
         }
 
         this.updateLetterBar();
-
-        // Announce letter softly
         window.kidsAudio.speakLetter(letter, this.isLowercase);
     }
 
@@ -320,7 +359,6 @@ class KidsAlphabetApp {
             this.renderStickerBook();
         }
 
-        // Show modal or celebratory card banner
         this.showSuccessCelebration(letter);
     }
 
@@ -328,7 +366,6 @@ class KidsAlphabetApp {
         const modal = document.getElementById('celebrationModal');
         if (!modal) return;
 
-        const starDisplay = modal.querySelector('.modal-stars');
         const charDisplay = modal.querySelector('.modal-char');
         const msgDisplay = modal.querySelector('.modal-msg');
 
@@ -375,6 +412,8 @@ class KidsAlphabetApp {
                     this.renderLetter(this.currentIndex);
                 }
             }, 100);
+        } else if (mode === 'videos') {
+            this.loadLetterVideo(this.currentIndex);
         } else if (mode === 'game') {
             this.startQuiz();
         } else if (mode === 'stickers') {
@@ -382,6 +421,56 @@ class KidsAlphabetApp {
         } else if (mode === 'chart') {
             this.renderChart();
         }
+    }
+
+    /**
+     * Mode: Alphabet Video Theater
+     */
+    renderVideoSection() {
+        const grid = document.getElementById('videoLettersGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        this.alphabet.forEach((item, idx) => {
+            const btn = document.createElement('button');
+            btn.className = `video-letter-pill ${idx === this.currentIndex ? 'active' : ''}`;
+            btn.innerHTML = `<span>${item.char}</span> <small>${item.emoji}</small>`;
+            btn.addEventListener('click', () => {
+                window.kidsAudio.playPop();
+                this.currentIndex = idx;
+                this.loadLetterVideo(idx);
+                document.querySelectorAll('.video-letter-pill').forEach((p, i) => {
+                    p.classList.toggle('active', i === idx);
+                });
+            });
+            grid.appendChild(btn);
+        });
+    }
+
+    loadLetterVideo(index) {
+        const letter = this.alphabet[index];
+        if (!letter) return;
+
+        const videoPlayer = document.getElementById('letterVideoPlayer');
+        const sourceEl = document.getElementById('videoPlayerSource');
+        const badgeEl = document.getElementById('videoLetterBadge');
+        const titleEl = document.getElementById('videoWordTitle');
+        const hintEl = document.getElementById('videoPhonicsHint');
+
+        const videoPath = `videos/letter_${letter.char}.mp4`;
+
+        if (badgeEl) badgeEl.textContent = letter.char;
+        if (titleEl) titleEl.textContent = `${letter.char} is for ${letter.word} ${letter.emoji}`;
+        if (hintEl) hintEl.textContent = `Letter ${letter.char} makes the sound ${letter.phonetic}`;
+
+        if (videoPlayer && sourceEl) {
+            sourceEl.src = videoPath;
+            videoPlayer.load();
+            videoPlayer.play().catch(() => {});
+        }
+
+        // Play matching audio lesson softly
+        window.kidsAudio.speakLetter(letter);
     }
 
     /**
@@ -411,7 +500,6 @@ class KidsAlphabetApp {
                 <button class="card-trace-btn" style="background-color: ${item.color}">Trace ✏️</button>
             `;
 
-            // Tap card body to hear audio
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('card-trace-btn')) return;
                 window.kidsAudio.speakLetter(item);
@@ -419,7 +507,6 @@ class KidsAlphabetApp {
                 setTimeout(() => card.classList.remove('bouncing'), 600);
             });
 
-            // Tap "Trace" button to jump straight to trace mode
             const traceBtn = card.querySelector('.card-trace-btn');
             traceBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -432,7 +519,7 @@ class KidsAlphabetApp {
     }
 
     /**
-     * Mode: Phonics & Letter Quiz Game
+     * Mode: Phonics Quiz Game
      */
     startQuiz() {
         this.quizState.score = 0;
@@ -442,14 +529,10 @@ class KidsAlphabetApp {
     }
 
     generateQuizQuestion() {
-        // Pick random question type:
-        // 0: "Find letter [X]"
-        // 1: "Which letter starts with [Emoji] [Word]?"
         const qType = Math.random() < 0.5 ? 'letter' : 'word';
         const correctIndex = Math.floor(Math.random() * this.alphabet.length);
         const correctLetter = this.alphabet[correctIndex];
 
-        // Pick 3 random distractor letters
         const distractors = [];
         while (distractors.length < 3) {
             const r = Math.floor(Math.random() * this.alphabet.length);
@@ -495,7 +578,6 @@ class KidsAlphabetApp {
             window.kidsAudio.speak(`Which letter does ${q.correctLetter.word} start with?`);
         }
 
-        // Render 4 large bubbly choice cards
         if (choicesGrid) {
             choicesGrid.innerHTML = '';
             q.choices.forEach(idx => {
@@ -521,7 +603,6 @@ class KidsAlphabetApp {
         const feedbackEl = document.getElementById('quizFeedback');
         const nextBtn = document.getElementById('quizNextBtn');
 
-        // Disable all choices
         document.querySelectorAll('.quiz-choice-card').forEach(c => c.disabled = true);
 
         if (isCorrect) {
@@ -614,7 +695,6 @@ class KidsAlphabetApp {
     }
 }
 
-// Start app once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.kidsApp = new KidsAlphabetApp();
 });

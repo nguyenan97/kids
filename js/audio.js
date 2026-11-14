@@ -1,7 +1,7 @@
 /**
- * Kids Alphabet Audio Engine
- * Pure Web Audio API synthesizers for zero-dependency, ultra-crisp sound effects
- * plus Web Speech API for natural phonics and letter narration.
+ * Kids Alphabet Audio Engine (v2.0)
+ * Uses high-quality natural voice audio recordings (Microsoft Azure Neural Child Voice)
+ * with instant Web Audio synthesizer chimes and smart SpeechSynthesis fallback.
  */
 
 class KidsAudioEngine {
@@ -10,6 +10,8 @@ class KidsAudioEngine {
         this.muted = false;
         this.speechEnabled = true;
         this.selectedVoice = null;
+        this.currentAudio = null;
+        this.audioCache = {};
         this.initVoices();
     }
 
@@ -29,25 +31,22 @@ class KidsAudioEngine {
         if (!('speechSynthesis' in window)) return;
         const setVoice = () => {
             const voices = window.speechSynthesis.getVoices();
-            // Prefer child-friendly, natural English voices
+            // Prioritize natural online / neural voices
             const preferred = [
+                'Natural',
+                'Jenny',
+                'Aria',
+                'Ana',
                 'Google US English',
-                'Google UK English Female',
                 'Samantha',
-                'Microsoft Jenny Online (Natural)',
-                'Microsoft Aria Online (Natural)',
-                'en-US',
-                'en-GB'
+                'en-US'
             ];
             for (const name of preferred) {
-                const found = voices.find(v => v.name.includes(name) || v.lang.startsWith(name));
+                const found = voices.find(v => v.name.includes(name) || v.lang.includes(name));
                 if (found) {
                     this.selectedVoice = found;
                     break;
                 }
-            }
-            if (!this.selectedVoice && voices.length > 0) {
-                this.selectedVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
             }
         };
 
@@ -133,13 +132,12 @@ class KidsAudioEngine {
         this.initContext();
         if (!this.ctx) return;
 
-        // Joyful chord fanfare
         const chord = [
-            { f: 523.25, t: 0 },    // C5
-            { f: 659.25, t: 0.09 }, // E5
-            { f: 783.99, t: 0.18 }, // G5
-            { f: 1046.50, t: 0.27 },// C6
-            { f: 1318.51, t: 0.38 } // E6
+            { f: 523.25, t: 0 },
+            { f: 659.25, t: 0.09 },
+            { f: 783.99, t: 0.18 },
+            { f: 1046.50, t: 0.27 },
+            { f: 1318.51, t: 0.38 }
         ];
 
         chord.forEach(item => {
@@ -189,13 +187,34 @@ class KidsAudioEngine {
         setTimeout(() => this.playStar(), 250);
     }
 
-    speak(text, { pitch = 1.08, rate = 0.88, onEnd = null } = {}) {
-        if (!this.speechEnabled || !('speechSynthesis' in window)) {
-            if (onEnd) onEnd();
-            return;
+    /**
+     * Plays a high-quality human voice MP3 file, with automatic speech synthesis fallback
+     */
+    playAudioFile(filePath, fallbackText) {
+        if (this.muted) return;
+
+        if (this.currentAudio) {
+            try {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+            } catch (_) {}
         }
 
-        window.speechSynthesis.cancel(); // Cancel any ongoing speech
+        const audio = new Audio(filePath);
+        this.currentAudio = audio;
+
+        audio.play().catch(() => {
+            // If local audio playback fails (e.g. offline cache miss), fallback to TTS
+            if (fallbackText) {
+                this.speak(fallbackText);
+            }
+        });
+    }
+
+    speak(text, { pitch = 1.12, rate = 0.86 } = {}) {
+        if (this.muted || !('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         if (this.selectedVoice) {
             utterance.voice = this.selectedVoice;
@@ -204,38 +223,30 @@ class KidsAudioEngine {
         utterance.rate = rate;
         utterance.lang = 'en-US';
 
-        if (onEnd) {
-            utterance.onend = onEnd;
-            utterance.onerror = onEnd;
-        }
-
         window.speechSynthesis.speak(utterance);
     }
 
     speakLetter(letterObj, isLower = false) {
         this.playPop();
-        const name = isLower ? letterObj.lower : letterObj.char;
-        const text = `${name}. ${name} is for ${letterObj.word}!`;
-        this.speak(text);
+        const char = letterObj.char.toUpperCase();
+        const filePath = `audio/letter_${char}.mp3`;
+        const fallback = `${letterObj.char}. ${letterObj.char} is for ${letterObj.word}!`;
+        this.playAudioFile(filePath, fallback);
     }
 
     speakPhonics(letterObj) {
-        const text = `${letterObj.char}. The letter ${letterObj.char} makes the sound ${letterObj.phonetic}. ${letterObj.phonetic}, ${letterObj.phonetic}, ${letterObj.word}!`;
-        this.speak(text);
+        this.playPop();
+        const char = letterObj.char.toUpperCase();
+        const filePath = `audio/phonics_${char}.mp3`;
+        const fallback = `The letter ${letterObj.char} makes the sound ${letterObj.phonetic}. ${letterObj.phonetic}, ${letterObj.phonetic}, ${letterObj.word}!`;
+        this.playAudioFile(filePath, fallback);
     }
 
     speakPraise() {
-        const praises = [
-            "Awesome job!",
-            "Superstar!",
-            "You did it!",
-            "Wonderful tracing!",
-            "High five!",
-            "Fantastic work!",
-            "You are so smart!"
-        ];
-        const randomPraise = praises[Math.floor(Math.random() * praises.length)];
-        this.speak(randomPraise);
+        const praiseIdx = Math.floor(Math.random() * 5) + 1;
+        const filePath = `audio/praise_${praiseIdx}.mp3`;
+        const fallback = "Superstar! Awesome tracing!";
+        this.playAudioFile(filePath, fallback);
     }
 }
 

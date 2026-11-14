@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -28,6 +28,7 @@
 
         <nav class="header-nav">
             <button class="nav-btn active" data-mode="trace">✏️ Trace</button>
+            <button class="nav-btn" data-mode="videos">🎬 Videos</button>
             <button class="nav-btn" data-mode="chart">🔠 Chart</button>
             <button class="nav-btn" data-mode="game">🎮 Quiz</button>
             <button class="nav-btn" data-mode="stickers">⭐ Stickers</button>
@@ -114,8 +115,14 @@
                             <button id="demoBtn" class="action-pill-btn demo" title="Watch animated demo">
                                 <span>👀</span> Watch Me
                             </button>
+                            <button id="traceVideoBtn" class="action-pill-btn video" title="Watch video lesson">
+                                <span>🎬</span> Video
+                            </button>
                             <button id="clearBtn" class="action-pill-btn clear" title="Clear and try again">
                                 <span>🔄</span> Try Again
+                            </button>
+                            <button id="doneTracingBtn" class="action-pill-btn finish" title="I am finished tracing!">
+                                <span>⭐</span> Done!
                             </button>
                             <button id="prevLetterBtn" class="action-pill-btn nav" title="Previous letter">
                                 <span>⬅️</span>
@@ -124,6 +131,11 @@
                                 <span>➡️</span>
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Stroke Progress Checklist -->
+                    <div class="stroke-checklist-bar" id="strokeChecklistBar">
+                        <!-- Populated by JS -->
                     </div>
 
                     <!-- Canvas Drawing Viewport -->
@@ -156,7 +168,49 @@
         </section>
 
         <!-- =========================================================
-             SECTION 2: ALPHABET CHART / SOUNDBOARD
+             SECTION 2: ALPHABET VIDEO THEATER
+             ========================================================= -->
+        <section id="section-videos" class="mode-section">
+            <div class="video-theater-wrapper">
+                <div class="video-theater-header">
+                    <h2>Alphabet Video Theater 🎬🍿</h2>
+                    <p>Watch fun animated videos teaching how to write each letter with phonics!</p>
+                </div>
+
+                <div class="video-player-card">
+                    <div class="video-media-box">
+                        <video id="letterVideoPlayer" controls playsinline loop preload="auto">
+                            <source id="videoPlayerSource" src="videos/letter_A.mp4" type="video/mp4">
+                            Your browser does not support video playback.
+                        </video>
+                    </div>
+
+                    <div class="video-info-strip">
+                        <div class="video-info-title">
+                            <span class="video-letter-badge" id="videoLetterBadge">A</span>
+                            <div>
+                                <h3 id="videoWordTitle">A is for Apple 🍎</h3>
+                                <p id="videoPhonicsHint">Letter A makes the sound /æ/</p>
+                            </div>
+                        </div>
+                        <button id="jumpToTraceFromVideoBtn" class="video-trace-jump-btn">
+                            ✏️ Trace This Letter Now!
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Video Alphabet Quick Picker -->
+                <div class="video-alphabet-selector">
+                    <h3>Choose a Letter Video:</h3>
+                    <div class="video-letters-grid" id="videoLettersGrid">
+                        <!-- 26 letter buttons populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 3: ALPHABET CHART / SOUNDBOARD
              ========================================================= -->
         <section id="section-chart" class="mode-section">
             <div class="chart-header">
@@ -225,10 +279,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/alphabet-data.js?v=2"></script>
-    <script src="js/audio.js?v=2"></script>
-    <script src="js/tracing-canvas.js?v=2"></script>
-    <script src="js/app.js?v=2"></script>
+    <script src="js/alphabet-data.js?v=3"></script>
+    <script src="js/audio.js?v=3"></script>
+    <script src="js/tracing-canvas.js?v=3"></script>
+    <script src="js/app.js?v=3"></script>
 
     <!-- Service Worker Registration for Offline Use -->
     <script>

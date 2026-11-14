@@ -1,8 +1,7 @@
 /**
- * Kids Tracing Canvas Engine (v2.0)
- * Rock-solid touch/pointer drawing, uniform aspect-ratio preservation,
- * high-contrast child-friendly letter guides, real-time accuracy scoring,
- * and celebratory animations.
+ * Kids Tracing Canvas Engine (v3.0)
+ * Rock-solid stroke-by-stroke tracking, no premature celebration,
+ * uniform aspect-ratio letter fitting, high-contrast guides, and confetti stars.
  */
 
 class TracingCanvas {
@@ -11,6 +10,7 @@ class TracingCanvas {
         this.ctx = this.canvas.getContext('2d');
         this.onProgress = options.onProgress || (() => {});
         this.onComplete = options.onComplete || (() => {});
+        this.onStrokeUpdate = options.onStrokeUpdate || (() => {});
 
         // Internal logical coordinate space: 1000 x 1000
         this.coordSize = 1000;
@@ -24,26 +24,29 @@ class TracingCanvas {
         this.isLowercase = false;
         this.strokes = [];
         this.checkpoints = []; // Array of {x, y, strokeId, hit}
+        this.strokeTotals = {}; // strokeId -> count
+        this.strokeHits = {};   // strokeId -> count
         this.totalCheckpoints = 0;
         this.hitCheckpoints = 0;
 
         // Brush settings
         this.currentColor = '#FF4757';
-        this.brushSize = 54; // in 1000-space
+        this.brushSize = 54;
         this.isRainbow = false;
         this.rainbowHue = 0;
 
         // Drawing state
         this.isDrawing = false;
-        this.userPaths = []; // Array of drawn paths: [ { color, size, points: [{x,y}] } ]
+        this.userPaths = [];
         this.currentPath = null;
         this.completed = false;
+        this.finishTimeout = null;
 
         // Demo animation state
         this.isDemoRunning = false;
         this.demoPencilPos = null;
 
-        // Floating sparkle particles
+        // Particles
         this.particles = [];
 
         this.initCanvasSize();
@@ -60,7 +63,6 @@ class TracingCanvas {
         this.canvas.width = Math.round(width * this.dpr);
         this.canvas.height = Math.round(height * this.dpr);
 
-        // Uniform aspect ratio scaling: fit 1000x1000 box with 40px margin
         const usableSize = 1000;
         const availableW = this.canvas.width;
         const availableH = this.canvas.height;
@@ -76,13 +78,23 @@ class TracingCanvas {
         this.currentLetter = letterObj;
         this.isLowercase = isLowercase;
         this.stopDemo();
+        if (this.finishTimeout) {
+            clearTimeout(this.finishTimeout);
+            this.finishTimeout = null;
+        }
 
         const rawStrokes = isLowercase ? letterObj.lowerStrokes : letterObj.upperStrokes;
         this.strokes = rawStrokes || [];
 
-        // Build dense checkpoints along each stroke for accuracy checking
+        // Build dense checkpoints along each stroke
         this.checkpoints = [];
+        this.strokeTotals = {};
+        this.strokeHits = {};
+
         this.strokes.forEach(stroke => {
+            this.strokeTotals[stroke.id] = 0;
+            this.strokeHits[stroke.id] = 0;
+
             const pts = stroke.points;
             if (!pts || pts.length < 2) return;
 
@@ -92,7 +104,7 @@ class TracingCanvas {
                 const dx = p2[0] - p1[0];
                 const dy = p2[1] - p1[1];
                 const dist = Math.hypot(dx, dy);
-                const steps = Math.max(1, Math.floor(dist / 30));
+                const steps = Math.max(1, Math.floor(dist / 28));
 
                 for (let s = 0; s <= steps; s++) {
                     const t = s / steps;
@@ -102,6 +114,7 @@ class TracingCanvas {
                         strokeId: stroke.id,
                         hit: false
                     });
+                    this.strokeTotals[stroke.id]++;
                 }
             }
         });
@@ -114,18 +127,25 @@ class TracingCanvas {
 
         this.redraw();
         this.onProgress(0, 0);
+        this.notifyStrokeStatus();
     }
 
     clear() {
         this.stopDemo();
+        if (this.finishTimeout) {
+            clearTimeout(this.finishTimeout);
+            this.finishTimeout = null;
+        }
         this.userPaths = [];
         this.currentPath = null;
         this.completed = false;
         this.hitCheckpoints = 0;
         this.checkpoints.forEach(cp => cp.hit = false);
+        this.strokes.forEach(s => this.strokeHits[s.id] = 0);
         this.particles = [];
         this.redraw();
         this.onProgress(0, 0);
+        this.notifyStrokeStatus();
         window.kidsAudio.playErase();
     }
 
@@ -142,9 +162,6 @@ class TracingCanvas {
         this.brushSize = size;
     }
 
-    /**
-     * Converts viewport client coordinates to 1000x1000 logical canvas coordinates
-     */
     getCoord(e) {
         const rect = this.canvas.getBoundingClientRect();
         const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -162,7 +179,6 @@ class TracingCanvas {
     bindEvents() {
         window.addEventListener('resize', () => this.initCanvasSize());
 
-        // Unified Pointer & Touch listeners
         const startDraw = (e) => {
             e.preventDefault();
             try {
@@ -196,13 +212,11 @@ class TracingCanvas {
             this.handleEnd();
         };
 
-        // Pointer Events
         this.canvas.addEventListener('pointerdown', startDraw);
         this.canvas.addEventListener('pointermove', moveDraw);
         this.canvas.addEventListener('pointerup', endDraw);
         this.canvas.addEventListener('pointercancel', endDraw);
 
-        // Explicit Touch fallback for older mobile browsers
         this.canvas.addEventListener('touchstart', startDraw, { passive: false });
         this.canvas.addEventListener('touchmove', moveDraw, { passive: false });
         this.canvas.addEventListener('touchend', endDraw, { passive: false });
@@ -249,11 +263,11 @@ class TracingCanvas {
     handleEnd() {
         this.isDrawing = false;
         this.currentPath = null;
-        this.checkCompletion();
+        this.evaluateLetterCompletion();
     }
 
     checkHit(pt) {
-        const hitRadius = this.brushSize * 1.8;
+        const hitRadius = this.brushSize * 1.5;
         let newHit = false;
 
         for (const cp of this.checkpoints) {
@@ -262,6 +276,7 @@ class TracingCanvas {
                 if (dist <= hitRadius) {
                     cp.hit = true;
                     this.hitCheckpoints++;
+                    this.strokeHits[cp.strokeId] = (this.strokeHits[cp.strokeId] || 0) + 1;
                     newHit = true;
                 }
             }
@@ -270,24 +285,55 @@ class TracingCanvas {
         if (newHit) {
             const pct = Math.min(100, Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100));
             let stars = 0;
-            if (pct >= 80) stars = 3;
-            else if (pct >= 50) stars = 2;
-            else if (pct >= 20) stars = 1;
+            if (pct >= 85) stars = 3;
+            else if (pct >= 55) stars = 2;
+            else if (pct >= 25) stars = 1;
 
             this.onProgress(pct, stars);
-
-            if (pct >= 80 && !this.completed) {
-                this.completed = true;
-                this.triggerCelebration();
-            }
+            this.notifyStrokeStatus();
+            // NEVER trigger celebration here while user is actively drawing!
         }
     }
 
-    checkCompletion() {
-        const pct = Math.min(100, Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100));
-        if (pct >= 75 && !this.completed) {
+    notifyStrokeStatus() {
+        const status = this.strokes.map(s => {
+            const tot = this.strokeTotals[s.id] || 1;
+            const hit = this.strokeHits[s.id] || 0;
+            const pct = Math.round((hit / tot) * 100);
+            return {
+                id: s.id,
+                hint: s.hint || `Stroke ${s.id}`,
+                pct: pct,
+                isDone: pct >= 65
+            };
+        });
+        this.onStrokeUpdate(status);
+    }
+
+    /**
+     * Checks if ALL strokes of the letter have been drawn.
+     * Only triggers when the child lifts their finger/mouse and every stroke is finished!
+     */
+    evaluateLetterCompletion() {
+        if (this.completed) return;
+
+        // Check if every individual stroke is >= 65% covered
+        const allStrokesDone = this.strokes.every(s => {
+            const tot = this.strokeTotals[s.id] || 1;
+            const hit = this.strokeHits[s.id] || 0;
+            return (hit / tot) >= 0.65;
+        });
+
+        // Also check overall coverage is >= 75%
+        const overallPct = (this.hitCheckpoints / this.totalCheckpoints) * 100;
+
+        if (allStrokesDone && overallPct >= 70) {
             this.completed = true;
-            this.triggerCelebration();
+            // Add a small 500ms delay so the child can admire their drawing before the modal appears!
+            if (this.finishTimeout) clearTimeout(this.finishTimeout);
+            this.finishTimeout = setTimeout(() => {
+                this.triggerCelebration();
+            }, 600);
         }
     }
 
@@ -295,7 +341,7 @@ class TracingCanvas {
         window.kidsAudio.playCheer();
         setTimeout(() => window.kidsAudio.speakPraise(), 550);
 
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 55; i++) {
             this.spawnCelebrationParticle();
         }
 
@@ -342,7 +388,7 @@ class TracingCanvas {
                     p.y += p.vy;
                     p.life -= p.decay;
                     if (p.type === 'confetti') {
-                        p.vy += 0.35; // gravity
+                        p.vy += 0.35;
                         p.rotation += p.rotSpeed;
                     }
                     if (p.life <= 0) {
@@ -356,9 +402,6 @@ class TracingCanvas {
         requestAnimationFrame(update);
     }
 
-    /**
-     * Animated demonstration showing how to trace the letter
-     */
     startDemo() {
         if (!this.strokes || this.strokes.length === 0) return;
         this.clear();
@@ -442,21 +485,14 @@ class TracingCanvas {
         ctx.translate(this.offsetX, this.offsetY);
         ctx.scale(this.scaleFactor, this.scaleFactor);
 
-        // 1. Draw Kindergarten 4-Line Guidelines
         this.drawHandwritingGuidelines(ctx);
-
-        // 2. Draw High-Contrast Letter Guide Track & Numbered Badges
         this.drawLetterGuide(ctx);
-
-        // 3. Draw User Traced Lines
         this.drawUserStrokes(ctx);
 
-        // 4. Draw Animated Demo Pencil (if active)
         if (this.demoPencilPos) {
             this.drawDemoPencil(ctx, this.demoPencilPos.x, this.demoPencilPos.y);
         }
 
-        // 5. Draw Particles
         this.drawParticles(ctx);
 
         ctx.restore();
@@ -481,7 +517,6 @@ class TracingCanvas {
             ctx.lineTo(970, line.y);
             ctx.stroke();
 
-            // Line label badge on the left
             ctx.setLineDash([]);
             ctx.font = 'bold 24px "Fredoka", "Comic Neue", sans-serif';
             ctx.fillStyle = '#546E7A';
@@ -498,7 +533,6 @@ class TracingCanvas {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Palette for distinct numbered badges
         const badgeColors = ['#1E90FF', '#FFA502', '#2ED573', '#9B59B6', '#FF4757'];
 
         // Layer A: Wide High-Contrast Outer Track Border
@@ -506,7 +540,6 @@ class TracingCanvas {
             const pts = stroke.points;
             if (pts.length < 2) return;
 
-            // Outer contour stroke (darker pastel outline)
             ctx.beginPath();
             ctx.setLineDash([]);
             ctx.strokeStyle = '#CBD5E1';
@@ -517,7 +550,6 @@ class TracingCanvas {
             }
             ctx.stroke();
 
-            // Soft friendly inner lane fill
             ctx.beginPath();
             ctx.strokeStyle = '#F1F5F9';
             ctx.lineWidth = this.brushSize * 2.0;
@@ -558,7 +590,7 @@ class TracingCanvas {
             ctx.fill();
         });
 
-        // Layer D: Distinct Numbered Badges & Directional Arrows
+        // Layer D: Numbered Badges & Directional Arrows
         this.strokes.forEach((stroke, idx) => {
             const pts = stroke.points;
             if (pts.length < 2) return;
@@ -567,7 +599,6 @@ class TracingCanvas {
             const startY = pts[0][1];
             const badgeColor = badgeColors[idx % badgeColors.length];
 
-            // Direction arrow along stroke
             const nextX = pts[1][0];
             const nextY = pts[1][1];
             const angle = Math.atan2(nextY - startY, nextX - startX);
@@ -588,7 +619,6 @@ class TracingCanvas {
             ctx.fill();
             ctx.restore();
 
-            // Glow / Pulse outer circle
             ctx.beginPath();
             ctx.arc(startX, startY, 36, 0, Math.PI * 2);
             ctx.fillStyle = badgeColor;
@@ -596,7 +626,6 @@ class TracingCanvas {
             ctx.fill();
             ctx.globalAlpha = 1.0;
 
-            // Numbered Circle Badge (1, 2, 3...)
             ctx.beginPath();
             ctx.arc(startX, startY, 28, 0, Math.PI * 2);
             ctx.fillStyle = badgeColor;
@@ -605,7 +634,6 @@ class TracingCanvas {
             ctx.lineWidth = 5;
             ctx.stroke();
 
-            // Number text
             ctx.font = 'bold 30px "Fredoka", "Comic Neue", sans-serif';
             ctx.fillStyle = '#FFFFFF';
             ctx.textAlign = 'center';
@@ -639,7 +667,6 @@ class TracingCanvas {
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y);
 
-            // Smooth Bézier curve through midpoints
             for (let i = 1; i < pts.length - 1; i++) {
                 const xc = (pts[i].x + pts[i + 1].x) / 2;
                 const yc = (pts[i].y + pts[i + 1].y) / 2;
@@ -656,7 +683,6 @@ class TracingCanvas {
         ctx.save();
         ctx.translate(x, y);
 
-        // Pencil tip glow
         const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 36);
         grad.addColorStop(0, 'rgba(255, 71, 87, 0.9)');
         grad.addColorStop(1, 'rgba(255, 71, 87, 0)');
@@ -665,7 +691,6 @@ class TracingCanvas {
         ctx.arc(0, 0, 36, 0, Math.PI * 2);
         ctx.fill();
 
-        // Animated pencil emoji
         ctx.font = '54px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
