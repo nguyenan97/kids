@@ -460,8 +460,8 @@ class KidsAlphabetApp {
         const videoPath = `videos/letter_${letter.char}.mp4`;
 
         if (badgeEl) badgeEl.textContent = letter.char;
-        if (titleEl) titleEl.textContent = `${letter.char} is for ${letter.word} ${letter.emoji}`;
-        if (hintEl) hintEl.textContent = `Letter ${letter.char} makes the sound ${letter.phonetic}`;
+        if (titleEl) titleEl.textContent = `Barnaby Teaches Letter ${letter.char} ${letter.emoji}`;
+        if (hintEl) hintEl.textContent = `${letter.char} is for ${letter.word}`;
 
         if (videoPlayer && sourceEl) {
             sourceEl.src = videoPath;
