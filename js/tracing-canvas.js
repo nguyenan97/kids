@@ -1,7 +1,8 @@
 /**
- * Kids Tracing Canvas Engine
- * Handles smooth finger/mouse drawing, stroke order guides, checkpoint tracking,
- * animated hand/pencil demo, and celebration particles.
+ * Kids Tracing Canvas Engine (v2.0)
+ * Rock-solid touch/pointer drawing, uniform aspect-ratio preservation,
+ * high-contrast child-friendly letter guides, real-time accuracy scoring,
+ * and celebratory animations.
  */
 
 class TracingCanvas {
@@ -11,9 +12,12 @@ class TracingCanvas {
         this.onProgress = options.onProgress || (() => {});
         this.onComplete = options.onComplete || (() => {});
 
-        // Internal logical coordinate size: 1000 x 1000
+        // Internal logical coordinate space: 1000 x 1000
         this.coordSize = 1000;
-        this.scale = 1;
+        this.scaleFactor = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.dpr = window.devicePixelRatio || 1;
 
         // Current letter state
         this.currentLetter = null;
@@ -25,7 +29,7 @@ class TracingCanvas {
 
         // Brush settings
         this.currentColor = '#FF4757';
-        this.brushSize = 42; // in 1000-space
+        this.brushSize = 54; // in 1000-space
         this.isRainbow = false;
         this.rainbowHue = 0;
 
@@ -37,7 +41,6 @@ class TracingCanvas {
 
         // Demo animation state
         this.isDemoRunning = false;
-        this.demoTimer = null;
         this.demoPencilPos = null;
 
         // Floating sparkle particles
@@ -50,13 +53,21 @@ class TracingCanvas {
 
     initCanvasSize() {
         const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const width = rect.width || 500;
+        this.dpr = window.devicePixelRatio || 1;
+        const width = rect.width || 600;
         const height = rect.height || 500;
 
-        this.canvas.width = Math.floor(width * dpr);
-        this.canvas.height = Math.floor(height * dpr);
-        this.scale = (width * dpr) / this.coordSize;
+        this.canvas.width = Math.round(width * this.dpr);
+        this.canvas.height = Math.round(height * this.dpr);
+
+        // Uniform aspect ratio scaling: fit 1000x1000 box with 40px margin
+        const usableSize = 1000;
+        const availableW = this.canvas.width;
+        const availableH = this.canvas.height;
+
+        this.scaleFactor = Math.min(availableW / usableSize, availableH / usableSize) * 0.94;
+        this.offsetX = (availableW - usableSize * this.scaleFactor) / 2;
+        this.offsetY = (availableH - usableSize * this.scaleFactor) / 2;
 
         this.redraw();
     }
@@ -69,20 +80,19 @@ class TracingCanvas {
         const rawStrokes = isLowercase ? letterObj.lowerStrokes : letterObj.upperStrokes;
         this.strokes = rawStrokes || [];
 
-        // Build checkpoints along each stroke
+        // Build dense checkpoints along each stroke for accuracy checking
         this.checkpoints = [];
         this.strokes.forEach(stroke => {
             const pts = stroke.points;
             if (!pts || pts.length < 2) return;
 
-            // Interpolate points every ~35 units
             for (let i = 0; i < pts.length - 1; i++) {
                 const p1 = pts[i];
                 const p2 = pts[i + 1];
                 const dx = p2[0] - p1[0];
                 const dy = p2[1] - p1[1];
                 const dist = Math.hypot(dx, dy);
-                const steps = Math.max(1, Math.floor(dist / 35));
+                const steps = Math.max(1, Math.floor(dist / 30));
 
                 for (let s = 0; s <= steps; s++) {
                     const t = s / steps;
@@ -132,41 +142,70 @@ class TracingCanvas {
         this.brushSize = size;
     }
 
+    /**
+     * Converts viewport client coordinates to 1000x1000 logical canvas coordinates
+     */
     getCoord(e) {
         const rect = this.canvas.getBoundingClientRect();
         const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
         const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
 
-        const x = ((clientX - rect.left) / rect.width) * this.coordSize;
-        const y = ((clientY - rect.top) / rect.height) * this.coordSize;
+        const canvasX = (clientX - rect.left) * this.dpr;
+        const canvasY = (clientY - rect.top) * this.dpr;
+
+        const x = (canvasX - this.offsetX) / this.scaleFactor;
+        const y = (canvasY - this.offsetY) / this.scaleFactor;
+
         return { x, y };
     }
 
     bindEvents() {
         window.addEventListener('resize', () => this.initCanvasSize());
 
-        // Pointer Events (supports stylus, finger touch, and mouse unified)
-        this.canvas.addEventListener('pointerdown', (e) => {
+        // Unified Pointer & Touch listeners
+        const startDraw = (e) => {
             e.preventDefault();
-            this.canvas.setPointerCapture(e.pointerId);
-            this.handleStart(this.getCoord(e));
-        });
+            try {
+                if (e.pointerId && this.canvas.setPointerCapture) {
+                    this.canvas.setPointerCapture(e.pointerId);
+                }
+            } catch (_) {}
+            const pt = this.getCoord(e);
+            this.handleStart(pt);
+        };
 
-        this.canvas.addEventListener('pointermove', (e) => {
+        const moveDraw = (e) => {
+            if (!this.isDrawing) return;
+            if (e.pointerType === 'mouse' && e.buttons === 0) {
+                this.handleEnd();
+                return;
+            }
+            e.preventDefault();
+            const pt = this.getCoord(e);
+            this.handleMove(pt);
+        };
+
+        const endDraw = (e) => {
             if (!this.isDrawing) return;
             e.preventDefault();
-            this.handleMove(this.getCoord(e));
-        });
-
-        const endHandler = (e) => {
-            if (!this.isDrawing) return;
-            e.preventDefault();
-            try { this.canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+            try {
+                if (e.pointerId && this.canvas.releasePointerCapture) {
+                    this.canvas.releasePointerCapture(e.pointerId);
+                }
+            } catch (_) {}
             this.handleEnd();
         };
 
-        this.canvas.addEventListener('pointerup', endHandler);
-        this.canvas.addEventListener('pointercancel', endHandler);
+        // Pointer Events
+        this.canvas.addEventListener('pointerdown', startDraw);
+        this.canvas.addEventListener('pointermove', moveDraw);
+        this.canvas.addEventListener('pointerup', endDraw);
+        this.canvas.addEventListener('pointercancel', endDraw);
+
+        // Explicit Touch fallback for older mobile browsers
+        this.canvas.addEventListener('touchstart', startDraw, { passive: false });
+        this.canvas.addEventListener('touchmove', moveDraw, { passive: false });
+        this.canvas.addEventListener('touchend', endDraw, { passive: false });
     }
 
     handleStart(pt) {
@@ -174,8 +213,8 @@ class TracingCanvas {
         this.isDrawing = true;
         let color = this.currentColor;
         if (this.isRainbow) {
-            color = `hsl(${this.rainbowHue}, 90%, 55%)`;
-            this.rainbowHue = (this.rainbowHue + 25) % 360;
+            color = `hsl(${this.rainbowHue}, 95%, 52%)`;
+            this.rainbowHue = (this.rainbowHue + 30) % 360;
         }
 
         this.currentPath = {
@@ -192,14 +231,13 @@ class TracingCanvas {
     }
 
     handleMove(pt) {
-        if (!this.currentPath) return;
+        if (!this.isDrawing || !this.currentPath) return;
         this.currentPath.points.push(pt);
 
         if (this.isRainbow) {
-            this.rainbowHue = (this.rainbowHue + 3) % 360;
-            this.currentPath.color = `hsl(${this.rainbowHue}, 90%, 55%)`;
-            // Spawn little sparkle particle occasionally
-            if (Math.random() < 0.4) {
+            this.rainbowHue = (this.rainbowHue + 4) % 360;
+            this.currentPath.color = `hsl(${this.rainbowHue}, 95%, 52%)`;
+            if (Math.random() < 0.45) {
                 this.spawnSparkle(pt.x, pt.y);
             }
         }
@@ -215,8 +253,7 @@ class TracingCanvas {
     }
 
     checkHit(pt) {
-        // Hit tolerance around stroke path
-        const hitRadius = this.brushSize * 1.5;
+        const hitRadius = this.brushSize * 1.8;
         let newHit = false;
 
         for (const cp of this.checkpoints) {
@@ -231,15 +268,15 @@ class TracingCanvas {
         }
 
         if (newHit) {
-            const pct = Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100);
+            const pct = Math.min(100, Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100));
             let stars = 0;
-            if (pct >= 85) stars = 3;
-            else if (pct >= 55) stars = 2;
-            else if (pct >= 25) stars = 1;
+            if (pct >= 80) stars = 3;
+            else if (pct >= 50) stars = 2;
+            else if (pct >= 20) stars = 1;
 
             this.onProgress(pct, stars);
 
-            if (pct >= 85 && !this.completed) {
+            if (pct >= 80 && !this.completed) {
                 this.completed = true;
                 this.triggerCelebration();
             }
@@ -247,20 +284,18 @@ class TracingCanvas {
     }
 
     checkCompletion() {
-        const pct = Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100);
-        if (pct >= 80 && !this.completed) {
+        const pct = Math.min(100, Math.round((this.hitCheckpoints / this.totalCheckpoints) * 100));
+        if (pct >= 75 && !this.completed) {
             this.completed = true;
             this.triggerCelebration();
         }
     }
 
     triggerCelebration() {
-        // Star fanfare and praise!
         window.kidsAudio.playCheer();
-        setTimeout(() => window.kidsAudio.speakPraise(), 600);
+        setTimeout(() => window.kidsAudio.speakPraise(), 550);
 
-        // Burst 40 confetti particles
-        for (let i = 0; i < 45; i++) {
+        for (let i = 0; i < 50; i++) {
             this.spawnCelebrationParticle();
         }
 
@@ -270,11 +305,11 @@ class TracingCanvas {
     spawnSparkle(x, y) {
         this.particles.push({
             type: 'sparkle',
-            x: x + (Math.random() * 30 - 15),
-            y: y + (Math.random() * 30 - 15),
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2 - 1,
-            size: 14 + Math.random() * 12,
+            x: x + (Math.random() * 26 - 13),
+            y: y + (Math.random() * 26 - 13),
+            vx: (Math.random() - 0.5) * 2.5,
+            vy: (Math.random() - 0.5) * 2.5 - 1.5,
+            size: 20 + Math.random() * 16,
             char: ['✨', '⭐', '💫', '💖'][Math.floor(Math.random() * 4)],
             life: 1.0,
             decay: 0.04
@@ -282,19 +317,19 @@ class TracingCanvas {
     }
 
     spawnCelebrationParticle() {
-        const colors = ['#FF4757', '#FFA502', '#2ED573', '#1E90FF', '#9B59B6', '#FFD32A'];
+        const colors = ['#FF4757', '#FFA502', '#2ED573', '#1E90FF', '#9B59B6', '#FFD32A', '#FF6B81'];
         this.particles.push({
             type: 'confetti',
-            x: 500 + (Math.random() * 200 - 100),
-            y: 500 + (Math.random() * 200 - 100),
-            vx: (Math.random() - 0.5) * 14,
-            vy: (Math.random() - 0.5) * 14 - 4,
-            size: 10 + Math.random() * 14,
+            x: 500 + (Math.random() * 240 - 120),
+            y: 500 + (Math.random() * 240 - 120),
+            vx: (Math.random() - 0.5) * 16,
+            vy: (Math.random() - 0.5) * 16 - 6,
+            size: 14 + Math.random() * 14,
             color: colors[Math.floor(Math.random() * colors.length)],
             life: 1.0,
-            decay: 0.015,
+            decay: 0.014,
             rotation: Math.random() * Math.PI,
-            rotSpeed: (Math.random() - 0.5) * 0.2
+            rotSpeed: (Math.random() - 0.5) * 0.25
         });
     }
 
@@ -307,7 +342,7 @@ class TracingCanvas {
                     p.y += p.vy;
                     p.life -= p.decay;
                     if (p.type === 'confetti') {
-                        p.vy += 0.3; // gravity
+                        p.vy += 0.35; // gravity
                         p.rotation += p.rotSpeed;
                     }
                     if (p.life <= 0) {
@@ -322,7 +357,7 @@ class TracingCanvas {
     }
 
     /**
-     * Demonstrates how to trace the letter step-by-step
+     * Animated demonstration showing how to trace the letter
      */
     startDemo() {
         if (!this.strokes || this.strokes.length === 0) return;
@@ -338,7 +373,6 @@ class TracingCanvas {
 
             const stroke = this.strokes[strokeIndex];
             if (!stroke) {
-                // Finished demo!
                 this.stopDemo();
                 window.kidsAudio.playStar();
                 return;
@@ -347,7 +381,7 @@ class TracingCanvas {
             const pts = stroke.points;
             if (pointIndex === 0) {
                 currentDemoPath = {
-                    color: '#FF6B81',
+                    color: '#FF4757',
                     size: this.brushSize,
                     isRainbow: false,
                     points: [ { x: pts[0][0], y: pts[0][1] } ]
@@ -359,12 +393,11 @@ class TracingCanvas {
             pointIndex++;
             if (pointIndex < pts.length) {
                 const target = { x: pts[pointIndex][0], y: pts[pointIndex][1] };
-                // interpolate smoothly
                 const last = currentDemoPath.points[currentDemoPath.points.length - 1];
                 const dx = target.x - last.x;
                 const dy = target.y - last.y;
                 const dist = Math.hypot(dx, dy);
-                const subSteps = Math.max(5, Math.floor(dist / 15));
+                const subSteps = Math.max(6, Math.floor(dist / 14));
 
                 let s = 1;
                 const subInterval = setInterval(() => {
@@ -383,12 +416,11 @@ class TracingCanvas {
                         clearInterval(subInterval);
                         setTimeout(step, 80);
                     }
-                }, 20);
+                }, 18);
             } else {
-                // Move to next stroke
                 strokeIndex++;
                 pointIndex = 0;
-                setTimeout(step, 250);
+                setTimeout(step, 240);
             }
         };
 
@@ -407,23 +439,24 @@ class TracingCanvas {
         ctx.clearRect(0, 0, w, h);
 
         ctx.save();
-        ctx.scale(this.scale, this.scale);
+        ctx.translate(this.offsetX, this.offsetY);
+        ctx.scale(this.scaleFactor, this.scaleFactor);
 
-        // 1. Draw Kindergarten / Montessori 4-Line Handwriting Rules
+        // 1. Draw Kindergarten 4-Line Guidelines
         this.drawHandwritingGuidelines(ctx);
 
-        // 2. Draw Guide Outline & Numbered Arrows
+        // 2. Draw High-Contrast Letter Guide Track & Numbered Badges
         this.drawLetterGuide(ctx);
 
         // 3. Draw User Traced Lines
         this.drawUserStrokes(ctx);
 
-        // 4. Draw Animated Demo Pencil (if demo running)
+        // 4. Draw Animated Demo Pencil (if active)
         if (this.demoPencilPos) {
             this.drawDemoPencil(ctx, this.demoPencilPos.x, this.demoPencilPos.y);
         }
 
-        // 5. Draw Particles (Sparkles & Confetti)
+        // 5. Draw Particles
         this.drawParticles(ctx);
 
         ctx.restore();
@@ -433,26 +466,26 @@ class TracingCanvas {
         ctx.save();
 
         const lines = [
-            { y: 180, label: '☁️ Sky Line', color: '#BDE0FE', dash: [] },
-            { y: 500, label: '✈️ Plane Line', color: '#FED049', dash: [14, 12] },
-            { y: 820, label: '🌿 Grass Line', color: '#55EFC4', dash: [] },
-            { y: 960, label: '🪱 Worm Line', color: '#FFD3B6', dash: [10, 10] }
+            { y: 180, label: '☁️ Sky Line', color: '#90CAF9', dash: [] },
+            { y: 500, label: '✈️ Plane Line', color: '#FBC02D', dash: [16, 14] },
+            { y: 820, label: '🌿 Grass Line', color: '#4CAF50', dash: [] },
+            { y: 940, label: '🪱 Worm Line', color: '#FFAB91', dash: [12, 12] }
         ];
 
         lines.forEach(line => {
             ctx.beginPath();
             ctx.setLineDash(line.dash);
             ctx.strokeStyle = line.color;
-            ctx.lineWidth = 4;
-            ctx.moveTo(60, line.y);
-            ctx.lineTo(940, line.y);
+            ctx.lineWidth = 4.5;
+            ctx.moveTo(30, line.y);
+            ctx.lineTo(970, line.y);
             ctx.stroke();
 
             // Line label badge on the left
             ctx.setLineDash([]);
-            ctx.font = 'bold 22px "Comic Neue", "Fredoka", sans-serif';
-            ctx.fillStyle = '#718096';
-            ctx.fillText(line.label, 70, line.y - 10);
+            ctx.font = 'bold 24px "Fredoka", "Comic Neue", sans-serif';
+            ctx.fillStyle = '#546E7A';
+            ctx.fillText(line.label, 40, line.y - 10);
         });
 
         ctx.restore();
@@ -465,27 +498,29 @@ class TracingCanvas {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Draw light ghost background strokes
+        // Palette for distinct numbered badges
+        const badgeColors = ['#1E90FF', '#FFA502', '#2ED573', '#9B59B6', '#FF4757'];
+
+        // Layer A: Wide High-Contrast Outer Track Border
         this.strokes.forEach(stroke => {
             const pts = stroke.points;
             if (pts.length < 2) return;
 
-            // Wide soft background track
+            // Outer contour stroke (darker pastel outline)
             ctx.beginPath();
             ctx.setLineDash([]);
-            ctx.strokeStyle = '#F1F3F5';
-            ctx.lineWidth = this.brushSize * 1.8;
+            ctx.strokeStyle = '#CBD5E1';
+            ctx.lineWidth = this.brushSize * 2.2;
             ctx.moveTo(pts[0][0], pts[0][1]);
             for (let i = 1; i < pts.length; i++) {
                 ctx.lineTo(pts[i][0], pts[i][1]);
             }
             ctx.stroke();
 
-            // Inner dashed guide track
+            // Soft friendly inner lane fill
             ctx.beginPath();
-            ctx.setLineDash([18, 16]);
-            ctx.strokeStyle = '#B2BEC3';
-            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#F1F5F9';
+            ctx.lineWidth = this.brushSize * 2.0;
             ctx.moveTo(pts[0][0], pts[0][1]);
             for (let i = 1; i < pts.length; i++) {
                 ctx.lineTo(pts[i][0], pts[i][1]);
@@ -493,35 +528,50 @@ class TracingCanvas {
             ctx.stroke();
         });
 
-        // Draw Checkpoint Dots
+        // Layer B: Bright Crisp Center Dashed Guide Line
+        this.strokes.forEach(stroke => {
+            const pts = stroke.points;
+            if (pts.length < 2) return;
+
+            ctx.beginPath();
+            ctx.setLineDash([20, 18]);
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 9;
+            ctx.moveTo(pts[0][0], pts[0][1]);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i][0], pts[i][1]);
+            }
+            ctx.stroke();
+        });
+
+        // Layer C: Checkpoint Dots
         this.checkpoints.forEach(cp => {
             ctx.beginPath();
             ctx.setLineDash([]);
             if (cp.hit) {
                 ctx.fillStyle = '#2ED573';
-                ctx.arc(cp.x, cp.y, 8, 0, Math.PI * 2);
+                ctx.arc(cp.x, cp.y, 10, 0, Math.PI * 2);
             } else {
-                ctx.fillStyle = '#DFE6E9';
-                ctx.arc(cp.x, cp.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#CBD5E1';
+                ctx.arc(cp.x, cp.y, 6, 0, Math.PI * 2);
             }
             ctx.fill();
         });
 
-        // Draw Numbered Badges & Directional Arrows at the start of each stroke
-        this.strokes.forEach(stroke => {
+        // Layer D: Distinct Numbered Badges & Directional Arrows
+        this.strokes.forEach((stroke, idx) => {
             const pts = stroke.points;
             if (pts.length < 2) return;
 
             const startX = pts[0][0];
             const startY = pts[0][1];
+            const badgeColor = badgeColors[idx % badgeColors.length];
 
-            // Calculate initial direction arrow
+            // Direction arrow along stroke
             const nextX = pts[1][0];
             const nextY = pts[1][1];
             const angle = Math.atan2(nextY - startY, nextX - startX);
-
-            // Draw directional arrow just ahead of start
-            const arrowDist = 48;
+            const arrowDist = 58;
             const ax = startX + Math.cos(angle) * arrowDist;
             const ay = startY + Math.sin(angle) * arrowDist;
 
@@ -529,31 +579,38 @@ class TracingCanvas {
             ctx.translate(ax, ay);
             ctx.rotate(angle);
             ctx.beginPath();
-            ctx.fillStyle = '#0984E3';
-            ctx.moveTo(12, 0);
-            ctx.lineTo(-8, -9);
-            ctx.lineTo(-4, 0);
-            ctx.lineTo(-8, 9);
+            ctx.fillStyle = badgeColor;
+            ctx.moveTo(16, 0);
+            ctx.lineTo(-10, -11);
+            ctx.lineTo(-5, 0);
+            ctx.lineTo(-10, 11);
             ctx.closePath();
             ctx.fill();
             ctx.restore();
 
+            // Glow / Pulse outer circle
+            ctx.beginPath();
+            ctx.arc(startX, startY, 36, 0, Math.PI * 2);
+            ctx.fillStyle = badgeColor;
+            ctx.globalAlpha = 0.25;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
             // Numbered Circle Badge (1, 2, 3...)
             ctx.beginPath();
-            ctx.setLineDash([]);
-            ctx.arc(startX, startY, 26, 0, Math.PI * 2);
-            ctx.fillStyle = '#0984E3';
+            ctx.arc(startX, startY, 28, 0, Math.PI * 2);
+            ctx.fillStyle = badgeColor;
             ctx.fill();
             ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.stroke();
 
             // Number text
-            ctx.font = 'bold 28px "Fredoka", "Comic Neue", sans-serif';
+            ctx.font = 'bold 30px "Fredoka", "Comic Neue", sans-serif';
             ctx.fillStyle = '#FFFFFF';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(stroke.id.toString(), startX, startY + 1);
+            ctx.fillText(stroke.id.toString(), startX, startY + 2);
         });
 
         ctx.restore();
@@ -600,19 +657,19 @@ class TracingCanvas {
         ctx.translate(x, y);
 
         // Pencil tip glow
-        const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 30);
-        grad.addColorStop(0, 'rgba(255, 107, 129, 0.8)');
-        grad.addColorStop(1, 'rgba(255, 107, 129, 0)');
+        const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 36);
+        grad.addColorStop(0, 'rgba(255, 71, 87, 0.9)');
+        grad.addColorStop(1, 'rgba(255, 71, 87, 0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(0, 0, 30, 0, Math.PI * 2);
+        ctx.arc(0, 0, 36, 0, Math.PI * 2);
         ctx.fill();
 
-        // Cute animated hand / pencil emoji
-        ctx.font = '48px sans-serif';
+        // Animated pencil emoji
+        ctx.font = '54px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('✏️', 10, -20);
+        ctx.fillText('✏️', 12, -24);
 
         ctx.restore();
     }

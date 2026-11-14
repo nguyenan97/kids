@@ -32,12 +32,12 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            500,
+            470,
             180
           ],
           [
-            220,
-            820
+            200,
+            800
           ]
         ],
         "hint": "Slant down left"
@@ -46,12 +46,12 @@ const ALPHABET_DATA = [
         "id": 2,
         "points": [
           [
-            500,
+            530,
             180
           ],
           [
-            780,
-            820
+            800,
+            800
           ]
         ],
         "hint": "Slant down right"
@@ -60,12 +60,12 @@ const ALPHABET_DATA = [
         "id": 3,
         "points": [
           [
-            320,
-            560
+            310,
+            520
           ],
           [
-            680,
-            560
+            690,
+            520
           ]
         ],
         "hint": "Cross the bridge"
@@ -152,12 +152,12 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
         "hint": "Down straight tall"
@@ -166,28 +166,28 @@ const ALPHABET_DATA = [
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            520,
+            530,
             180
           ],
           [
-            620,
+            630,
             240
           ],
           [
-            620,
-            440
+            630,
+            430
           ],
           [
-            520,
-            500
+            530,
+            490
           ],
           [
             280,
-            500
+            490
           ]
         ],
         "hint": "Top bump",
@@ -197,28 +197,28 @@ const ALPHABET_DATA = [
         "id": 3,
         "points": [
           [
-            280,
-            500
+            340,
+            490
           ],
           [
-            550,
-            500
-          ],
-          [
-            670,
-            560
+            560,
+            490
           ],
           [
             670,
-            760
+            550
           ],
           [
-            550,
-            820
+            670,
+            750
+          ],
+          [
+            560,
+            800
           ],
           [
             280,
-            820
+            800
           ]
         ],
         "hint": "Bottom bump",
@@ -421,12 +421,12 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
         "hint": "Down straight tall"
@@ -435,28 +435,28 @@ const ALPHABET_DATA = [
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            540,
+            550,
             180
           ],
           [
             730,
-            340
+            330
           ],
           [
             730,
-            660
+            650
           ],
           [
-            540,
-            820
+            550,
+            800
           ],
           [
             280,
-            820
+            800
           ]
         ],
         "hint": "One giant tummy",
@@ -548,12 +548,12 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
         "hint": "Down straight tall"
@@ -562,11 +562,11 @@ const ALPHABET_DATA = [
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            720,
+            730,
             180
           ]
         ],
@@ -576,12 +576,12 @@ const ALPHABET_DATA = [
         "id": 3,
         "points": [
           [
-            280,
-            500
+            300,
+            490
           ],
           [
-            640,
-            500
+            650,
+            490
           ]
         ],
         "hint": "Middle shelf"
@@ -590,12 +590,12 @@ const ALPHABET_DATA = [
         "id": 4,
         "points": [
           [
-            280,
-            820
+            300,
+            800
           ],
           [
             730,
-            820
+            800
           ]
         ],
         "hint": "Bottom shelf"
@@ -690,12 +690,12 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
         "hint": "Down straight tall"
@@ -704,11 +704,11 @@ const ALPHABET_DATA = [
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            720,
+            730,
             180
           ]
         ],
@@ -718,12 +718,12 @@ const ALPHABET_DATA = [
         "id": 3,
         "points": [
           [
-            280,
-            500
+            300,
+            490
           ],
           [
             640,
-            500
+            490
           ]
         ],
         "hint": "Middle shelf"
@@ -1828,42 +1828,42 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
-        "hint": "Tall pole down"
+        "hint": "Down straight tall"
       },
       {
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            540,
+            550,
             180
           ],
           [
-            680,
+            690,
             240
           ],
           [
-            680,
-            440
+            690,
+            430
           ],
           [
-            540,
-            500
+            550,
+            490
           ],
           [
             280,
-            500
+            490
           ]
         ],
         "hint": "Top round balloon",
@@ -2099,42 +2099,42 @@ const ALPHABET_DATA = [
         "id": 1,
         "points": [
           [
-            280,
+            270,
             180
           ],
           [
-            280,
-            820
+            270,
+            800
           ]
         ],
-        "hint": "Tall pole down"
+        "hint": "Down straight tall"
       },
       {
         "id": 2,
         "points": [
           [
-            280,
+            340,
             180
           ],
           [
-            540,
+            550,
             180
           ],
           [
-            680,
+            690,
             240
           ],
           [
-            680,
-            440
+            690,
+            430
           ],
           [
-            540,
-            500
+            550,
+            490
           ],
           [
             280,
-            500
+            490
           ]
         ],
         "hint": "Round top tummy",
@@ -2145,11 +2145,11 @@ const ALPHABET_DATA = [
         "points": [
           [
             480,
-            500
+            490
           ],
           [
             740,
-            820
+            800
           ]
         ],
         "hint": "Kick leg out to the ground"
