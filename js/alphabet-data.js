@@ -2935,9 +2935,9 @@ const ALPHABET_DATA = [
     "char": "Z",
     "lower": "z",
     "word": "Zebra",
-    "emoji": "\ud83e\udd93",
-    "phonetic": "zzz",
-    "soundHint": "/z/ like zebra",
+    "emoji": "🦓",
+    "phonetic": "zed",
+    "soundHint": "/z/ as in zebra (Zed)",
     "color": "#2C3E50",
     "bgGradient": "linear-gradient(135deg, #2C3E50 0%, #4B6584 100%)",
     "altWords": [

@@ -1,7 +1,7 @@
 /**
- * Kids Alphabet Audio Engine (v2.0)
- * Uses high-quality natural voice audio recordings (Microsoft Azure Neural Child Voice)
- * with instant Web Audio synthesizer chimes and smart SpeechSynthesis fallback.
+ * Kids Alphabet Audio Engine (v4.0 - British English Edition)
+ * Uses high-quality British English natural voice audio recordings (en-GB Maisie Neural)
+ * with instant Web Audio synthesizer chimes and UK English SpeechSynthesis fallback.
  */
 
 class KidsAudioEngine {
@@ -31,22 +31,30 @@ class KidsAudioEngine {
         if (!('speechSynthesis' in window)) return;
         const setVoice = () => {
             const voices = window.speechSynthesis.getVoices();
-            // Prioritize natural online / neural voices
+            // Prioritize British English (en-GB) natural voices
             const preferred = [
-                'Natural',
-                'Jenny',
-                'Aria',
-                'Ana',
-                'Google US English',
-                'Samantha',
-                'en-US'
+                'Google UK English Female',
+                'Google UK English Male',
+                'en-GB',
+                'Maisie',
+                'Libby',
+                'Sonia',
+                'Ryan',
+                'George',
+                'Susan',
+                'Hazel',
+                'Oliver',
+                'en_GB'
             ];
             for (const name of preferred) {
-                const found = voices.find(v => v.name.includes(name) || v.lang.includes(name));
+                const found = voices.find(v => v.lang === 'en-GB' || v.name.includes(name) || v.lang.startsWith('en-GB'));
                 if (found) {
                     this.selectedVoice = found;
                     break;
                 }
+            }
+            if (!this.selectedVoice) {
+                this.selectedVoice = voices.find(v => v.lang.startsWith('en-GB')) || null;
             }
         };
 
@@ -107,7 +115,7 @@ class KidsAudioEngine {
         this.initContext();
         if (!this.ctx) return;
 
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((freq, i) => {
             const now = this.ctx.currentTime + (i * 0.06);
             const osc = this.ctx.createOscillator();
@@ -187,9 +195,6 @@ class KidsAudioEngine {
         setTimeout(() => this.playStar(), 250);
     }
 
-    /**
-     * Plays a high-quality human voice MP3 file, with automatic speech synthesis fallback
-     */
     playAudioFile(filePath, fallbackText) {
         if (this.muted) return;
 
@@ -204,14 +209,13 @@ class KidsAudioEngine {
         this.currentAudio = audio;
 
         audio.play().catch(() => {
-            // If local audio playback fails (e.g. offline cache miss), fallback to TTS
             if (fallbackText) {
                 this.speak(fallbackText);
             }
         });
     }
 
-    speak(text, { pitch = 1.12, rate = 0.86 } = {}) {
+    speak(text, { pitch = 1.05, rate = 0.88 } = {}) {
         if (this.muted || !('speechSynthesis' in window)) return;
 
         window.speechSynthesis.cancel();
@@ -221,7 +225,7 @@ class KidsAudioEngine {
         }
         utterance.pitch = pitch;
         utterance.rate = rate;
-        utterance.lang = 'en-US';
+        utterance.lang = 'en-GB';
 
         window.speechSynthesis.speak(utterance);
     }
@@ -230,7 +234,8 @@ class KidsAudioEngine {
         this.playPop();
         const char = letterObj.char.toUpperCase();
         const filePath = `audio/letter_${char}.mp3`;
-        const fallback = `${letterObj.char}. ${letterObj.char} is for ${letterObj.word}!`;
+        const letterName = char === 'Z' ? 'Zed' : char;
+        const fallback = `${letterName}! ${letterName} is for ${letterObj.word}!`;
         this.playAudioFile(filePath, fallback);
     }
 
@@ -238,14 +243,15 @@ class KidsAudioEngine {
         this.playPop();
         const char = letterObj.char.toUpperCase();
         const filePath = `audio/phonics_${char}.mp3`;
-        const fallback = `The letter ${letterObj.char} makes the sound ${letterObj.phonetic}. ${letterObj.phonetic}, ${letterObj.phonetic}, ${letterObj.word}!`;
+        const letterName = char === 'Z' ? 'Zed' : char;
+        const fallback = `The letter ${letterName} makes the sound ${letterObj.phonetic}. ${letterObj.phonetic}, ${letterObj.phonetic}, ${letterObj.word}!`;
         this.playAudioFile(filePath, fallback);
     }
 
     speakPraise() {
         const praiseIdx = Math.floor(Math.random() * 5) + 1;
         const filePath = `audio/praise_${praiseIdx}.mp3`;
-        const fallback = "Superstar! Awesome tracing!";
+        const fallback = "Brilliant job! Superstar!";
         this.playAudioFile(filePath, fallback);
     }
 }
