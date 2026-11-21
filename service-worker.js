@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ms-tuyen-kids-v7';
+const CACHE_NAME = 'ms-tuyen-kids-v8';
 const ASSETS = [
     './',
     './index.html',
