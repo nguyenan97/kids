@@ -10,7 +10,16 @@ Companion website for the YouTube channel [English with Ms Tuyen](https://www.yo
 
 Tracing app based on [rkarim25/kids](https://github.com/rkarim25/kids).
 
-## Thêm / cập nhật video
+## Tự động cập nhật video
+
+GitHub Action `.github/workflows/pages.yml` chạy mỗi ngày lúc 20:30 giờ Việt Nam (13:30 UTC) và mỗi lần push:
+- `tools/sync_youtube.py` đọc trang công khai của kênh; video nào vừa public mà trùng title trong `data/videos.json` thì tự điền ID và giờ public thật; video public mới chưa có trong danh sách thì tự thêm vào.
+- `tools/build.py` dựng lại JSON-LD, danh sách video và sitemap, rồi deploy lên GitHub Pages.
+- Muốn chạy ngay: tab Actions -> "Sync YouTube and deploy site" -> Run workflow.
+
+Muốn hiện thẻ "Coming soon" cho video sắp đăng: thêm entry vào `data/videos.json` với title **đúng y như trong Studio** và `publish_at`, để trống `youtube_id`.
+
+## Thêm / cập nhật video bằng tay
 
 1. Sửa `data/videos.json`: điền `youtube_id` (phần sau `v=` hoặc `/shorts/`) và `publish_at` đúng giờ Public/Schedule trong Studio.
 2. Chạy `python tools/build.py` (tạo `js/videos-data.js`, JSON-LD VideoObject, danh sách video tĩnh cho Google, `sitemap.xml`).

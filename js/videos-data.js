@@ -15,7 +15,7 @@ window.CHANNEL_VIDEOS = [
   "type": "short",
   "letter": "S",
   "title": "Letter S Sound | Sun Song for Kids",
-  "publish_at": "2026-11-16T19:30:00+07:00"
+  "publish_at": "2026-11-16T04:30:29-08:00"
  },
  {
   "key": "ph02",
@@ -31,7 +31,7 @@ window.CHANNEL_VIDEOS = [
   "type": "short",
   "letter": "T",
   "title": "Letter T Sound | Tiger Dance Song for Kids",
-  "publish_at": "2026-11-20T19:30:00+07:00"
+  "publish_at": "2026-11-20T04:30:15-08:00"
  },
  {
   "key": "lg01",

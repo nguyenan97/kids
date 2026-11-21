@@ -1,0 +1,67 @@
+name: Sync YouTube and deploy site
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 13:30 UTC = 20:30 gio Viet Nam, 1 tieng sau slot dang 19:30 ICT.
+    - cron: "30 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Link newly public YouTube videos
+        if: github.event_name != 'push'
+        run: python tools/sync_youtube.py
+
+      - name: Build SEO parts
+        run: python tools/build.py
+
+      - name: Commit data changes
+        if: github.event_name != 'push'
+        run: |
+          if git diff --quiet data/videos.json; then
+            echo "No new videos."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/videos.json js/videos-data.js index.html sitemap.xml
+            git commit -m "Auto: link newly public YouTube videos"
+            git push
+          fi
+
+      - name: Prepare site folder
+        run: |
+          mkdir _site
+          cp -r index.html favicon.png manifest.json service-worker.js robots.txt sitemap.xml .nojekyll css js icons img audio _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
