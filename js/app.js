@@ -413,7 +413,7 @@ class KidsAlphabetApp {
                 }
             }, 100);
         } else if (mode === 'videos') {
-            this.loadLetterVideo(this.currentIndex);
+            this.renderVideoSection();
         } else if (mode === 'game') {
             this.startQuiz();
         } else if (mode === 'stickers') {
@@ -427,47 +427,14 @@ class KidsAlphabetApp {
      * Mode: Alphabet Video Theater
      */
     renderVideoSection() {
-        const grid = document.getElementById('videoLettersGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-
-        this.alphabet.forEach((item, idx) => {
-            const btn = document.createElement('button');
-            btn.className = `video-letter-pill ${idx === this.currentIndex ? 'active' : ''}`;
-            btn.innerHTML = `<span>${item.char}</span> <small>${item.emoji}</small>`;
-            btn.addEventListener('click', () => {
-                window.kidsAudio.playPop();
-                this.currentIndex = idx;
-                this.loadLetterVideo(idx);
-                document.querySelectorAll('.video-letter-pill').forEach((p, i) => {
-                    p.classList.toggle('active', i === idx);
-                });
-            });
-            grid.appendChild(btn);
-        });
+        if (window.channelVideos) window.channelVideos.render();
     }
 
     loadLetterVideo(index) {
         const letter = this.alphabet[index];
-        if (!letter) return;
-
-        const videoPlayer = document.getElementById('letterVideoPlayer');
-        const sourceEl = document.getElementById('videoPlayerSource');
-        const badgeEl = document.getElementById('videoLetterBadge');
-        const titleEl = document.getElementById('videoWordTitle');
-        const hintEl = document.getElementById('videoPhonicsHint');
-
-        const videoPath = `videos/letter_${letter.char}.mp4`;
-
-        if (badgeEl) badgeEl.textContent = letter.char;
-        if (titleEl) titleEl.textContent = `Barnaby Teaches Letter ${letter.char} ${letter.emoji}`;
-        if (hintEl) hintEl.textContent = `${letter.char} is for ${letter.word}`;
-
-        if (videoPlayer && sourceEl) {
-            sourceEl.src = videoPath;
-            videoPlayer.load();
-            videoPlayer.play().catch(() => {});
-        }
+        if (!letter || !window.channelVideos) return;
+        window.channelVideos.render();
+        window.channelVideos.focusLetter(letter.char);
     }
 
     /**

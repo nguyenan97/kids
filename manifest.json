@@ -1,18 +1,15 @@
 {
-  "name": "Kids Alphabet & Letter Tracing Studio",
-  "short_name": "Kids Alphabet",
-  "description": "Fun, interactive English alphabet learning and letter tracing app for preschool and kindergarten kids.",
+  "name": "English with Ms Tuyen - Phonics & Letter Tracing",
+  "short_name": "Ms Tuyen ABC",
+  "description": "Letter sound songs, phonics videos and ABC tracing with Poppy the rabbit.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#FFF9F2",
-  "theme_color": "#FFF9F2",
+  "background_color": "#FFF3DF",
+  "theme_color": "#FFF3DF",
   "orientation": "any",
   "icons": [
-    {
-      "src": "icons/icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }

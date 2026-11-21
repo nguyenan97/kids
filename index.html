@@ -2,12 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kids Alphabet & Letter Tracing Studio</title>
-    <meta name="description" content="Fun, interactive English alphabet learning and letter tracing app for preschool and kindergarten kids.">
-    <meta name="theme-color" content="#FFF9F2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English with Ms Tuyen | Fun English Phonics & Letter Tracing for Kids</title>
+    <meta name="description" content="Learn English for kids with Poppy the rabbit: letter sound songs, phonics videos, ABC tracing, alphabet games and stickers. Free, colorful and fun from the very first words.">
+    <link rel="canonical" href="https://nguyenan97.github.io/kids/">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="author" content="English with Ms Tuyen">
+    <meta name="theme-color" content="#FFF3DF">
+    <!-- Google Search Console: dán thẻ google-site-verification vào đây nếu chọn cách xác minh bằng HTML tag -->
+
+    <!-- Open Graph / social share -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="English with Ms Tuyen">
+    <meta property="og:title" content="English with Ms Tuyen | Fun English Phonics for Kids">
+    <meta property="og:description" content="Letter sound songs, phonics videos and ABC tracing with Poppy the rabbit. Free and fun!">
+    <meta property="og:url" content="https://nguyenan97.github.io/kids/">
+    <meta property="og:image" content="https://nguyenan97.github.io/kids/img/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="English with Ms Tuyen - Little discoveries. Big smiles.">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="English with Ms Tuyen | Fun English Phonics for Kids">
+    <meta name="twitter:description" content="Letter sound songs, phonics videos and ABC tracing with Poppy the rabbit.">
+    <meta name="twitter:image" content="https://nguyenan97.github.io/kids/img/og-image.jpg">
+
+    <script>document.documentElement.classList.add("js");</script>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+    <!-- BUILD:JSONLD -->
+    <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://nguyenan97.github.io/kids/#org",
+   "name": "English with Ms Tuyen",
+   "url": "https://nguyenan97.github.io/kids/",
+   "logo": "https://nguyenan97.github.io/kids/icons/icon-512.png",
+   "sameAs": [
+    "https://www.youtube.com/@EnglishWithMsTuyen"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://nguyenan97.github.io/kids/#website",
+   "name": "English with Ms Tuyen",
+   "url": "https://nguyenan97.github.io/kids/",
+   "inLanguage": "en",
+   "publisher": {
+    "@id": "https://nguyenan97.github.io/kids/#org"
+   }
+  },
+  {
+   "@type": "WebPage",
+   "@id": "https://nguyenan97.github.io/kids/#page",
+   "url": "https://nguyenan97.github.io/kids/",
+   "name": "English with Ms Tuyen | Fun English Phonics & Letter Tracing for Kids",
+   "isPartOf": {
+    "@id": "https://nguyenan97.github.io/kids/#website"
+   },
+   "about": {
+    "@id": "https://nguyenan97.github.io/kids/#org"
+   },
+   "primaryImageOfPage": "https://nguyenan97.github.io/kids/img/og-image.jpg"
+  }
+ ]
+}
+    </script>
+    <!-- /BUILD:JSONLD -->
 
     <!-- Child-friendly Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +89,8 @@
     <!-- Header Navigation -->
     <header class="app-header">
         <div class="brand-wrapper">
-            <div class="logo-badge">🔤</div>
-            <div class="brand-title">Kids Alphabet</div>
+            <img class="logo-img" src="icons/icon-192.png" alt="" width="48" height="48">
+            <div class="brand-title">English with Ms Tuyen</div>
         </div>
 
         <nav class="header-nav">
@@ -42,6 +109,19 @@
             <button id="muteToggleBtn" class="icon-circle-btn" title="Toggle Sound">🔊</button>
         </div>
     </header>
+
+    <!-- Intro hero (main heading for search engines and parents) -->
+    <section class="site-hero" aria-labelledby="siteHeading">
+        <img class="site-hero-poppy" src="img/poppy.png" alt="Poppy the rabbit waving hello" width="160" height="160">
+        <div class="site-hero-text">
+            <h1 id="siteHeading">🌈 Learn English for kids with Poppy!</h1>
+            <p>Sing letter sound songs, watch phonics videos, then trace every letter from A to Z. Free, colorful and fun from the very first words.</p>
+            <div class="site-hero-actions">
+                <a class="hero-cta primary" href="https://www.youtube.com/@EnglishWithMsTuyen?sub_confirmation=1" target="_blank" rel="noopener">▶ Subscribe on YouTube</a>
+                <button class="hero-cta secondary" type="button" data-goto="videos">🎬 Watch videos</button>
+            </div>
+        </div>
+    </section>
 
     <!-- Quick 26 Letters Strip -->
     <div class="quick-letter-strip" id="lettersQuickBar" aria-label="Alphabet selector">
@@ -173,38 +253,24 @@
         <section id="section-videos" class="mode-section">
             <div class="video-theater-wrapper">
                 <div class="video-theater-header">
-                    <h2>Alphabet Theater with Barnaby the Bunny 🐰🥕</h2>
-                    <p>Watch Barnaby the Bunny hop in and teach how to write each letter with his magic pencil!</p>
+                    <h2>Sing &amp; Learn with Poppy 🐰🎵</h2>
+                    <p>Letter sound songs and phonics lessons from our YouTube channel. New videos are added every week!</p>
                 </div>
 
-                <div class="video-player-card">
-                    <div class="video-media-box">
-                        <video id="letterVideoPlayer" controls playsinline loop preload="auto">
-                            <source id="videoPlayerSource" src="videos/letter_A.mp4" type="video/mp4">
-                            Your browser does not support video playback.
-                        </video>
-                    </div>
+                <div class="channel-video-grid" id="channelVideoGrid" aria-live="polite"></div>
 
-                    <div class="video-info-strip">
-                        <div class="video-info-title">
-                            <span class="video-letter-badge" id="videoLetterBadge">A</span>
-                            <div>
-                                <h3 id="videoWordTitle">Barnaby Teaches Letter A 🍎</h3>
-                                <p id="videoPhonicsHint">A is for Apple</p>
-                            </div>
-                        </div>
-                        <button id="jumpToTraceFromVideoBtn" class="video-trace-jump-btn">
-                            ✏️ Trace This Letter Now!
-                        </button>
-                    </div>
-                </div>
+                <noscript>
+                    <p>Our latest videos on YouTube:</p>
+                </noscript>
+                <ul class="static-video-list">
+    <!-- BUILD:VIDEOLIST -->
+            <li>New lessons are coming soon. <a href="https://www.youtube.com/@EnglishWithMsTuyen">Visit our YouTube channel</a>.</li>
+    <!-- /BUILD:VIDEOLIST -->
+                </ul>
 
-                <!-- Video Alphabet Quick Picker -->
-                <div class="video-alphabet-selector">
-                    <h3>Choose a Letter Video:</h3>
-                    <div class="video-letters-grid" id="videoLettersGrid">
-                        <!-- 26 letter buttons populated via JS -->
-                    </div>
+                <div class="video-cta-row">
+                    <a class="hero-cta primary" href="https://www.youtube.com/@EnglishWithMsTuyen?sub_confirmation=1" target="_blank" rel="noopener">▶ Subscribe for free English lessons</a>
+                    <button id="jumpToTraceFromVideoBtn" class="video-trace-jump-btn">✏️ Trace a Letter Now!</button>
                 </div>
             </div>
         </section>
@@ -278,11 +344,26 @@
         </div>
     </div>
 
+    <footer class="site-footer">
+        <p><strong>English with Ms Tuyen</strong> - Little discoveries. Big smiles.</p>
+        <p><a href="https://www.youtube.com/@EnglishWithMsTuyen" target="_blank" rel="noopener">YouTube: @EnglishWithMsTuyen</a></p>
+        <p class="footer-note">This site has no ads, no sign-up and no tracking. Videos play from YouTube in privacy-enhanced mode.</p>
+        <p class="footer-note">Letter tracing app based on the open project <a href="https://github.com/rkarim25/kids" target="_blank" rel="noopener">rkarim25/kids</a>.</p>
+    </footer>
+
     <!-- Scripts -->
-    <script src="js/alphabet-data.js?v=6"></script>
-    <script src="js/audio.js?v=6"></script>
-    <script src="js/tracing-canvas.js?v=6"></script>
-    <script src="js/app.js?v=6"></script>
+    <script src="js/alphabet-data.js?v=7"></script>
+    <script src="js/audio.js?v=7"></script>
+    <script src="js/tracing-canvas.js?v=7"></script>
+    <script src="js/videos-data.js?v=7"></script>
+    <script src="js/channel-videos.js?v=7"></script>
+    <script src="js/app.js?v=7"></script>
+    <script>
+        document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => {
+            const nav = document.querySelector(`.nav-btn[data-mode="${b.dataset.goto}"]`);
+            if (nav) { nav.click(); nav.scrollIntoView({ behavior: 'smooth' }); }
+        }));
+    </script>
 
     <!-- Service Worker Registration for Offline Use -->
     <script>
