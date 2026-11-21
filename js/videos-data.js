@@ -72,5 +72,13 @@ window.CHANNEL_VIDEOS = [
   "letter": "M",
   "title": "Letter M Sound | Mouse Song for Kids",
   "publish_at": "2026-11-30T19:30:00+07:00"
+ },
+ {
+  "key": "Hlq2CX8R-lw",
+  "youtube_id": "Hlq2CX8R-lw",
+  "type": "long",
+  "letter": "",
+  "title": "Learn to Blend sit and pin | Phonics Story for Kids",
+  "publish_at": "2000-01-01T00:00:00+00:00"
  }
 ];
