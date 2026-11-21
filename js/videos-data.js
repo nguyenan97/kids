@@ -3,7 +3,7 @@ window.CHANNEL = {"name": "English with Ms Tuyen", "handle": "@EnglishWithMsTuye
 window.CHANNEL_VIDEOS = [
  {
   "key": "x01",
-  "youtube_id": "",
+  "youtube_id": "FGL4wpdKTTM",
   "type": "short",
   "letter": "ABC",
   "title": "ABC Song for Kids | A B C, Apple, Ball and Car",
@@ -11,7 +11,7 @@ window.CHANNEL_VIDEOS = [
  },
  {
   "key": "ph01",
-  "youtube_id": "",
+  "youtube_id": "Dherm392ogw",
   "type": "short",
   "letter": "S",
   "title": "Letter S Sound | Sun Song for Kids",
@@ -19,7 +19,7 @@ window.CHANNEL_VIDEOS = [
  },
  {
   "key": "ph02",
-  "youtube_id": "",
+  "youtube_id": "TM0BlM4nRXY",
   "type": "short",
   "letter": "A",
   "title": "Short A Sound | Apple Song for Kids",
@@ -27,7 +27,7 @@ window.CHANNEL_VIDEOS = [
  },
  {
   "key": "ph03",
-  "youtube_id": "",
+  "youtube_id": "wdIiDLUDSWk",
   "type": "short",
   "letter": "T",
   "title": "Letter T Sound | Tiger Dance Song for Kids",
