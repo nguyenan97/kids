@@ -1542,3 +1542,17 @@ html, body { overflow-x: hidden; max-width: 100%; }
     .sticker-letter { font-size: 1.2rem; }
     .sticker-name { font-size: 0.75rem; }
 }
+
+/* About / for grown-ups */
+.about-site { max-width: 1200px; margin: 32px auto 0; padding: 0 24px; }
+.about-site h2 { font-size: clamp(1.3rem, 2.6vw, 1.8rem); color: #30233B; text-align: center; margin-bottom: 18px; }
+.about-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.about-grid article { background: var(--bg-card); border-radius: 22px; padding: 18px 20px; box-shadow: var(--shadow-sm); }
+.about-grid h3 { font-size: 1.1rem; color: #206D65; margin-bottom: 6px; }
+.about-grid p { color: var(--text-muted); line-height: 1.5; user-select: text; -webkit-user-select: text; }
+.about-grid a { color: #E86436; font-weight: 700; }
+@media (max-width: 600px) {
+    .about-site { padding: 0 12px; margin-top: 24px; }
+    .about-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .about-grid article { padding: 14px 16px; }
+}
