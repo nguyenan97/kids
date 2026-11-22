@@ -80,5 +80,13 @@ window.CHANNEL_VIDEOS = [
   "letter": "",
   "title": "Learn to Blend sit and pin | Phonics Story for Kids",
   "publish_at": "2000-01-01T00:00:00+00:00"
+ },
+ {
+  "key": "dNve2otJdLc",
+  "youtube_id": "dNve2otJdLc",
+  "type": "short",
+  "letter": "",
+  "title": "ABC Song for Kids | A to Z Alphabet Song with Words",
+  "publish_at": "2000-01-01T00:00:00+00:00"
  }
 ];
