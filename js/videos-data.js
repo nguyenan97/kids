@@ -88,5 +88,13 @@ window.CHANNEL_VIDEOS = [
   "letter": "",
   "title": "ABC Song for Kids | A to Z Alphabet Song with Words",
   "publish_at": "2000-01-01T00:00:00+00:00"
+ },
+ {
+  "key": "EtoKkrNJdxo",
+  "youtube_id": "EtoKkrNJdxo",
+  "type": "long",
+  "letter": "",
+  "title": "Talk About Your School | English Speaking Practice",
+  "publish_at": "2000-01-01T00:00:00+00:00"
  }
 ];
