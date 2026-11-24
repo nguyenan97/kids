@@ -43,7 +43,7 @@ window.CHANNEL_VIDEOS = [
  },
  {
   "key": "ph04",
-  "youtube_id": "",
+  "youtube_id": "qm1TtRIRDRo",
   "type": "short",
   "letter": "P",
   "title": "Letter P Sound | Pen Song for Kids",
