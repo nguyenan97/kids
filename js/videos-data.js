@@ -51,7 +51,7 @@ window.CHANNEL_VIDEOS = [
  },
  {
   "key": "ph05",
-  "youtube_id": "",
+  "youtube_id": "51BDgW8SLr4",
   "type": "short",
   "letter": "I",
   "title": "Short I Sound | Insect Song for Kids",
